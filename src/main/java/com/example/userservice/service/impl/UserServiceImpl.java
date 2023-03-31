@@ -1,7 +1,9 @@
 package com.example.userservice.service.impl;
 
-import com.example.userservice.model.User;
+import com.example.userservice.model.UserCreate;
+import com.example.userservice.persistence.entity.User;
 import com.example.userservice.model.UserUpdate;
+import com.example.userservice.persistence.repository.UserRepository;
 import com.example.userservice.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,39 +11,37 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.Optional;
 
-import static com.example.userservice.util.EmailUtil.validateEmail;
 
 @Service
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
 public class UserServiceImpl implements UserService {
 
-    private final List<User> users = new CopyOnWriteArrayList<>();
+    private final UserRepository userRepository;
 
     @Override
-    public void create(String email, String walletAddress) {
-        for (User user: users){
-            if(Objects.equals(user.getEmail(),email)){
-                throw new IllegalArgumentException("Email already exists");
-            }
-            if(Objects.equals(user.getWalletAddress(),walletAddress)){
-                throw new IllegalArgumentException("Wallet address already exists");
-            }
+    public void create(UserCreate user) {
+        String userEmail = user.getEmail();
+        String userWallet = user.getWalletAddress();
+        final Optional<User> optUser = userRepository.findByEmailOrWalletAddress(userEmail, userWallet);
+        if (optUser.isPresent()) {
+            throw new IllegalArgumentException("Email/Wallet already exists");
         }
-        User newUser = new User(email,walletAddress);
-        users.add(newUser);
+        userRepository.save(User.builder()
+                .email(userEmail)
+                .walletAddress(userWallet)
+                .build());
     }
 
     @Override
     public void delete(Long id) {
-        for(User user: users){
-            if (user.getId().equals(id)) {
-                users.remove(user);
-                return;
-            }
+        final var optUser = userRepository.findById(id);
+        if (optUser.isEmpty()) {
+            throw new IllegalStateException("Cannot find user by given id");
         }
-        throw new IllegalArgumentException("Cannot find any user with given id");
+        User user = optUser.get();
+        userRepository.delete(user);
     }
 
     @Override
@@ -49,50 +49,44 @@ public class UserServiceImpl implements UserService {
         Long id = user.getId();
         String email = user.getEmail();
         String walletAddress = user.getWalletAddress();
-        if (Objects.isNull(email) && Objects.isNull(walletAddress)){
+        final var optUser = userRepository.findById(id);
+        if (optUser.isEmpty()) {
+            throw new IllegalStateException("Cannot find user by given id");
+        }
+        if (Objects.isNull(email) && Objects.isNull(walletAddress)) {
             throw new IllegalArgumentException("You haven't given email or/and wallet address");
         }
-        for(User userToUpdate: users){
-            if (userToUpdate.getId().equals(id)) {
-                if(!Objects.isNull(email)){
-                    if(validateEmail(email)){
-                        userToUpdate.setEmail(email);
-                    }
-                    else{
-                        throw new IllegalArgumentException("Incorrect format of email address");
-                    }
-                }
-                if(!Objects.isNull(walletAddress)){
-                    userToUpdate.setWalletAddress(walletAddress);
-                }
-                return;
-            }
-            throw new IllegalArgumentException("Cannot find any user with given id");
+        User userToUpdate = optUser.get();
+
+        if (!Objects.isNull(email)) {
+            userToUpdate.setEmail(email);
         }
+        if (!Objects.isNull(walletAddress)) {
+            userToUpdate.setWalletAddress(walletAddress);
+        }
+        userRepository.save(userToUpdate);
     }
 
     @Override
     public List<User> getAll() {
-        return users;
+        return userRepository.findAll();
     }
 
     @Override
     public User getById(Long id) {
-        for(User user: users){
-            if (user.getId().equals(id)) {
-                return user;
-            }
+        final var optUser = userRepository.findById(id);
+        if (optUser.isEmpty()) {
+            throw new IllegalStateException("Cannot find user by given id");
         }
-        throw new IllegalArgumentException("Cannot find any user with given id");
+        return optUser.get();
     }
 
     @Override
     public User getByEmail(String email) {
-        for(User user: users){
-            if (user.getEmail().equals(email)) {
-                return user;
-            }
+        final var optUser = userRepository.findByEmail(email);
+        if (optUser.isEmpty()) {
+            throw new IllegalStateException("Cannot find any user with given email");
         }
-        throw new IllegalArgumentException("Cannot find any user with given email");
+        return optUser.get();
     }
 }

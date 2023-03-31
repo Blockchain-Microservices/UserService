@@ -1,15 +1,14 @@
 package com.example.userservice.controller.impl;
 
 import com.example.userservice.controller.UserController;
-import com.example.userservice.model.User;
+import com.example.userservice.model.UserCreate;
+import com.example.userservice.persistence.entity.User;
 import com.example.userservice.model.UserUpdate;
 import com.example.userservice.service.impl.UserServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.validation.Errors;
 
 import java.util.List;
 
@@ -20,8 +19,8 @@ public class UserControllerImpl implements UserController {
     private final UserServiceImpl service;
 
     @Override
-    public ResponseEntity<?> create(final User user) {
-        service.create(user.getEmail(),user.getWalletAddress());
+    public ResponseEntity<?> create(final UserCreate user) {
+        service.create(user);
         return ResponseEntity.ok().build();
     }
 

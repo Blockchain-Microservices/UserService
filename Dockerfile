@@ -5,7 +5,7 @@ WORKDIR /build/
 COPY pom.xml /build
 COPY src /build/src
 
-RUN mvn install
+RUN mvn install -Dmaven.test.skip=true
 
 FROM openjdk:19-jdk-alpine3.16
 

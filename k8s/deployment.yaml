@@ -18,3 +18,13 @@ spec:
           imagePullPolicy: Never
           ports:
             - containerPort: 8080
+      initContainers:
+        - name: run-migrations
+          image: users-migrations:latest
+          imagePullPolicy: Never
+          command: [ "migrate", "-path", "/migrations", "-database", "$(POSTGRESQL_URL)", "goto", "$(VERSION)" ]
+          env:
+            - name: POSTGRESQL_URL
+              value: "postgres://postgres:postgres@postgres-service:5432/tokens?sslmode=disable"
+            - name: VERSION
+              value: "1680253200"

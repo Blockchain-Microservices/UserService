@@ -1,6 +1,7 @@
 package com.example.userservice.controller;
 
-import com.example.userservice.model.User;
+import com.example.userservice.model.UserCreate;
+import com.example.userservice.persistence.entity.User;
 import com.example.userservice.model.UserUpdate;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -14,7 +15,7 @@ import java.util.List;
 public interface UserController {
     @PostMapping("create")
     ResponseEntity<?> create(
-            @RequestBody @Valid @NotNull User user
+            @RequestBody @Valid @NotNull UserCreate user
     );
 
     @DeleteMapping("delete/{id}")
